@@ -15,6 +15,15 @@ Thread 1: this thread toggles the LED1 each 200 ms for 5 seconds and then it sus
 ## 02:add doxygen
 * Don't slect the prepare for compressed HTML(.chm) otherwise,the search function will be lost.
 ## 03:Semaphores examples
+### timeline
+0s-------------------------------5s----------------------10s
+* 0s:Thread1(H) obtains semaphore
+* 5s:Thread1 release the semaphore and suspends itself.Thread2 obtains the semaphore,resume Thread1
+* 10s:Thread2 release the semaphore,end of cycle
 ## 04:SemaphoresISR examples
-* Forced to change timesource base.Using Tim7
-* Hardware improvement,add capacitance to the button
+### timeline
+0s-------------------------------x-y-z-------------------10s
+* 0s:No semaphore,Thread 1 blocked
+* xs:button click,EXTI ISR created a semaphore
+* y:Thread1 unblocked,and get the semaphore
+* z:No semaphore again!Thread1 blocked
