@@ -15,3 +15,6 @@ Thread 1: this thread toggles the LED1 each 200 ms for 5 seconds and then it sus
 ## 02:add doxygen
 * Don't slect the prepare for compressed HTML(.chm) otherwise,the search function will be lost.
 ## 03:Semaphores examples
+## 04:SemaphoresISR examples
+* Forced to change timesource base.Using Tim7
+* Hardware improvement,add capacitance to the button

@@ -66,11 +66,13 @@ osThreadId led3TaskHandle;
 osThreadId led4TaskHandle;
 osThreadId printfTaskHandle;
 osThreadId sensor1TaskHandle;
+osSemaphoreId keySemHandle;
 
 /* USER CODE BEGIN Variables */
 char  cPrint[1024];
 volatile uint16_t uiADC[10];
 char  cGetChar[1024];
+
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
@@ -157,41 +159,42 @@ void MX_FREERTOS_Init(void) {
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* definition and creation of keySem */
+  osSemaphoreDef(keySem);
+  keySemHandle = osSemaphoreCreate(osSemaphore(keySem), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
-  /* Define the semaphore */
-  osSemaphoreDef(SEM);
-  /* Create the binary semaphore */
-  osSemaphoreId osSemaphore = osSemaphoreCreate(osSemaphore(SEM), 1);
+
   /* Create the thread(s) */
   /* definition and creation of led1Task */
   osThreadDef(led1Task, vLed1Task, osPriorityNormal, 0, 128);
-   /* get thread led1Task ready */
-  led1TaskHandle = osThreadCreate(osThread(led1Task), (void *) osSemaphore);
+  led1TaskHandle = osThreadCreate(osThread(led1Task), keySemHandle);
 
   /* definition and creation of led2Task */
-  osThreadDef(led2Task, vLed2Task, osPriorityIdle, 0, 128);
-  /* get thread led2Task ready */
-  led2TaskHandle = osThreadCreate(osThread(led2Task), (void *) osSemaphore);
+//  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
+//  led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
 
-  /* definition and creation of led3Task */
+//  /* definition and creation of led3Task */
 //  osThreadDef(led3Task, vLed3Task, osPriorityNormal, 0, 128);
 //  led3TaskHandle = osThreadCreate(osThread(led3Task), NULL);
 
-  /* definition and creation of led4Task */
+//  /* definition and creation of led4Task */
 //  osThreadDef(led4Task, vLed4Task, osPriorityNormal, 0, 128);
 //  led4TaskHandle = osThreadCreate(osThread(led4Task), NULL);
 
-  /* definition and creation of printfTask */
+//  /* definition and creation of printfTask */
 //  osThreadDef(printfTask, vPrintfTask, osPriorityNormal, 0, 128);
 //  printfTaskHandle = osThreadCreate(osThread(printfTask), NULL);
 
-  /* definition and creation of sensor1Task */
+//  /* definition and creation of sensor1Task */
 //  osThreadDef(sensor1Task, vSensor1Task, osPriorityAboveNormal, 0, 128);
 //  sensor1TaskHandle = osThreadCreate(osThread(sensor1Task), NULL);
 
@@ -205,40 +208,22 @@ void MX_FREERTOS_Init(void) {
 }
 
 /* vLed1Task function */
-__weak void vLed1Task(void const * argument)
+void vLed1Task(void const * argument)
 {
 
   /* USER CODE BEGIN vLed1Task */
-  uint32_t count = 0;
-  osSemaphoreId semaphore = (osSemaphoreId) argument;
+//  uint32_t count = 0;
+//  osSemaphoreId semaphore = (osSemaphoreId) argument;
   /* Infinite loop */
   for (;;)
   {
 
-    if (semaphore != NULL)
+    if (keySemHandle != NULL)
     {
       /* Try to obtain the semaphore */
-      if (osSemaphoreWait(semaphore , 100) == osOK)
+      if (osSemaphoreWait(keySemHandle , osWaitForever) == osOK)
       {
-        count = osKernelSysTick() + 5000;
-
-        /* Toggle LED2 every 200 ms for 5 seconds */
-        while (count >= osKernelSysTick())
-        {
-          /* Toggle LED1 */
           BSP_LED_Toggle(LED1);
-
-          /* Delay 200 ms */
-          osDelay(200);
-        }
-
-        /* Turn off LED1*/
-        BSP_LED_Off(LED1);
-        /* Release the semaphore */
-        osSemaphoreRelease(semaphore);
-
-        /* Suspend ourseleves to execute thread 2 (lower priority)  */
-        osThreadSuspend(NULL);
       }
     }
   }

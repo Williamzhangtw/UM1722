@@ -80,6 +80,7 @@
 #define HEAT_GPIO_Port GPIOA
 #define USER_BUTTON_Pin GPIO_PIN_6
 #define USER_BUTTON_GPIO_Port GPIOG
+#define USER_BUTTON_EXTI_IRQn EXTI9_5_IRQn
 #define SEL_JOY_Pin GPIO_PIN_8
 #define SEL_JOY_GPIO_Port GPIOG
 

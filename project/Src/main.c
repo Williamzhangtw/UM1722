@@ -68,6 +68,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
+static void MX_NVIC_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -86,16 +87,7 @@ int main(void)
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
-  /* STM32F103xE HAL library initialization:
-       - Configure the Flash prefetch
-       - Set NVIC Group Priority to 4
-       - Systick timer is configured by default as source of time base, but user 
-       can eventually implement his proper time base source (a general purpose 
-       timer for example or other time source), keeping in mind that Time base 
-       duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
-       handled in milliseconds basis.
-       - Low Level Initialization
-     */
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
@@ -116,6 +108,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
 
+  /* Initialize interrupts */
+  MX_NVIC_Init();
+
   /* USER CODE BEGIN 2 */
 //  setvbuf(stdin, NULL, _IONBF, 0);
 //  char c =getchar();
@@ -123,7 +118,7 @@ int main(void)
  // printf("Hello world!\n");
   /* Init only, trace starts later...*/
  // vTraceEnable(TRC_INIT);
- // vTraceEnable(TRC_START_AWAIT_HOST);
+  vTraceEnable(TRC_START_AWAIT_HOST);
 
   /* In a task or ISR */
  // vTraceEnable(TRC_START);
@@ -208,13 +203,25 @@ void SystemClock_Config(void)
   HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 }
 
+/** NVIC Configuration
+*/
+static void MX_NVIC_Init(void)
+{
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* EXTI9_5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 15, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+}
+
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
+  * @note   This function is called  when TIM7 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -225,7 +232,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 /* USER CODE BEGIN Callback 0 */
 
 /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM6) {
+  if (htim->Instance == TIM7) {
     HAL_IncTick();
   }
 /* USER CODE BEGIN Callback 1 */
