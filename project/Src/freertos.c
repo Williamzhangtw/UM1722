@@ -84,6 +84,9 @@ void vSensor1Task(void const * argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
+
+
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define VDD_APPLI                      ((uint32_t) 3300)   /* Value of analog voltage supply Vdda (unit: mV) */
@@ -147,7 +150,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-       
+
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -161,17 +164,20 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
-
+  /* Define the semaphore */
+  osSemaphoreDef(SEM);
+  /* Create the binary semaphore */
+  osSemaphoreId osSemaphore = osSemaphoreCreate(osSemaphore(SEM), 1);
   /* Create the thread(s) */
   /* definition and creation of led1Task */
   osThreadDef(led1Task, vLed1Task, osPriorityNormal, 0, 128);
    /* get thread led1Task ready */
-  led1TaskHandle = osThreadCreate(osThread(led1Task), NULL);
+  led1TaskHandle = osThreadCreate(osThread(led1Task), (void *) osSemaphore);
 
   /* definition and creation of led2Task */
-  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
+  osThreadDef(led2Task, vLed2Task, osPriorityIdle, 0, 128);
   /* get thread led2Task ready */
-  led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
+  led2TaskHandle = osThreadCreate(osThread(led2Task), (void *) osSemaphore);
 
   /* definition and creation of led3Task */
 //  osThreadDef(led3Task, vLed3Task, osPriorityNormal, 0, 128);
@@ -203,41 +209,39 @@ __weak void vLed1Task(void const * argument)
 {
 
   /* USER CODE BEGIN vLed1Task */
-   uint32_t count = 0;
-  (void) argument;
-
+  uint32_t count = 0;
+  osSemaphoreId semaphore = (osSemaphoreId) argument;
   /* Infinite loop */
   for (;;)
   {
-    count = osKernelSysTick() + 5000;
 
-    /* Toggle LED1 every 200 ms for 5 s */
-    while (count >= osKernelSysTick())
+    if (semaphore != NULL)
     {
-      BSP_LED_Toggle(LED1);
+      /* Try to obtain the semaphore */
+      if (osSemaphoreWait(semaphore , 100) == osOK)
+      {
+        count = osKernelSysTick() + 5000;
 
-      osDelay(200);
+        /* Toggle LED2 every 200 ms for 5 seconds */
+        while (count >= osKernelSysTick())
+        {
+          /* Toggle LED1 */
+          BSP_LED_Toggle(LED1);
+
+          /* Delay 200 ms */
+          osDelay(200);
+        }
+
+        /* Turn off LED1*/
+        BSP_LED_Off(LED1);
+        /* Release the semaphore */
+        osSemaphoreRelease(semaphore);
+
+        /* Suspend ourseleves to execute thread 2 (lower priority)  */
+        osThreadSuspend(NULL);
+      }
     }
-
-    /* Turn off LED1 */
-    BSP_LED_Off(LED1);
-
-    /* Suspend Thread 1 */
-    osThreadSuspend(NULL);
-
-    count = osKernelSysTick() + 5000;
-
-    /* Toggle LED1 every 400 ms for 5 s */
-    while (count >= osKernelSysTick())
-    {
-      BSP_LED_Toggle(LED1);
-
-      osDelay(400);
-    }
-
-    /* Resume Thread 2*/
-    osThreadResume(led2TaskHandle);
-  } 
+  }
   /* USER CODE END vLed1Task */
 }
 
@@ -245,31 +249,37 @@ __weak void vLed1Task(void const * argument)
 void vLed2Task(void const * argument)
 {
   /* USER CODE BEGIN vLed2Task */
-   uint32_t count;
-  (void) argument;
+  uint32_t count = 0;
+  osSemaphoreId semaphore = (osSemaphoreId) argument;
 
   /* Infinite loop */
-
   for (;;)
   {
-    count = osKernelSysTick() + 10000;
-
-    /* Toggle LED2 every 500 ms for 10 s */
-    while (count >= osKernelSysTick())
+    if (semaphore != NULL)
     {
-      BSP_LED_Toggle(LED2);
+      /* Try to obtain the semaphore */
+      if (osSemaphoreWait(semaphore , 0) == osOK)
+      {
+        /* Resume Thread 1 (higher priority)*/
+        osThreadResume(led1TaskHandle);
 
-      osDelay(500);
+        count = osKernelSysTick() + 5000;
+
+        /* Toggle LED2 every 200 ms for 5 seconds*/
+        while (count >= osKernelSysTick())
+        {
+          BSP_LED_Toggle(LED2);
+
+          osDelay(200);
+        }
+
+        /* Turn off LED2 */
+        BSP_LED_Off(LED2);
+
+        /* Release the semaphore to unblock Thread 1 (higher priority)  */
+        osSemaphoreRelease(semaphore);
+      }
     }
-
-    /* Turn off LED2 */
-    BSP_LED_Off(LED2);
-
-    /* Resume Thread 1 */
-    osThreadResume(led1TaskHandle);
-
-    /* Suspend Thread 2 */
-    osThreadSuspend(NULL);
   }
   /* USER CODE END vLed2Task */
 }
@@ -355,7 +365,7 @@ if (HAL_ADC_Start_DMA(&hadc1,
 }
 
 /* USER CODE BEGIN Application */
-     
+ 
 
 }
 

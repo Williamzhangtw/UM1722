@@ -123,7 +123,7 @@ int main(void)
  // printf("Hello world!\n");
   /* Init only, trace starts later...*/
  // vTraceEnable(TRC_INIT);
-  vTraceEnable(TRC_START_AWAIT_HOST);
+ // vTraceEnable(TRC_START_AWAIT_HOST);
 
   /* In a task or ISR */
  // vTraceEnable(TRC_START);
@@ -148,7 +148,6 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 
