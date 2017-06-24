@@ -33,12 +33,12 @@ FreeRTOS configuration->Include parameters->Enable eTaskGetState
 * 0s:thread1(H) take the mutex,and it calls the delay
 * a:thread2(M)found no mutex,blocked
 * b:thread3(L)found no mutex,blocked
-* c:thread1 release mutex,and suspend itself------------------------------------
-* d:thread2 take the mutex,and then release the mutex,finally suspend itself   |
-* e:thread3 take the mutex,and then resume thread2                             |
-* f:thread2 found no mutex,blocked                                             |
-* g:thread3 resume thread1                                                     |
-* h:thread1 found no mutex,blocked                                             |
-* i:thread3 release mutex                                                      | 
-* j:thread1 take the mutex,and it calls the delay                              |
-* k:thread3 found no mutex,blocked. -------------------------------------------|
+* c:thread1 release mutex,and suspend itself<-
+* d:thread2 take the mutex,and then release the mutex,finally suspend itself
+* e:thread3 take the mutex,and then resume thread2
+* f:thread2 found no mutex,blocked
+* g:thread3 resume thread1
+* h:thread1 found no mutex,blocked
+* i:thread3 release mutex
+* j:thread1 take the mutex,and it calls the delay
+* k:thread3 found no mutex,blocked.->
