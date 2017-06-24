@@ -12,18 +12,33 @@ Thread 1: this thread toggles the LED1 each 200 ms for 5 seconds and then it sus
 * 5s:Thread1 suspends itself
 * 10s:  Thread2 resume thread1; thread2 suspend itself;thread1 LED1 each 400ms
 * 15s: thread1 resume thread2; end of the cycle!
-## 02:add doxygen
-* Don't slect the prepare for compressed HTML(.chm) otherwise,the search function will be lost.
-## 03:Semaphores examples
+## 02:Semaphores examples
 ### timeline
 0s-------------------------------5s----------------------10s
 * 0s:Thread1(H) obtains semaphore
 * 5s:Thread1 release the semaphore and suspends itself.Thread2 obtains the semaphore,resume Thread1
 * 10s:Thread2 release the semaphore,end of cycle
-## 04:SemaphoresISR examples
+## 03:SemaphoresISR examples
 ### timeline
 0s-------------------------------x-y-z-------------------10s
 * 0s:No semaphore,Thread 1 blocked
-* xs:button click,EXTI ISR created a semaphore
+* x:button click,EXTI ISR created a semaphore
 * y:Thread1 unblocked,and get the semaphore
 * z:No semaphore again!Thread1 blocked
+## mutex
+* cubemx 
+FreeRTOS configuration->Include parameters->Enable eTaskGetState
+### timeline
+0s-----------a-b-c-d-e-f-g-h-i-j-k-----------10s
+* 0s:thread1(H) take the mutex,and it calls the delay
+* a:thread2(M)found no mutex,blocked
+* b:thread3(L)found no mutex,blocked
+* c:thread1 release mutex,and suspend itself------------------------------------
+* d:thread2 take the mutex,and then release the mutex,finally suspend itself   |
+* e:thread3 take the mutex,and then resume thread2                             |
+* f:thread2 found no mutex,blocked                                             |
+* g:thread3 resume thread1                                                     |
+* h:thread1 found no mutex,blocked                                             |
+* i:thread3 release mutex                                                      | 
+* j:thread1 take the mutex,and it calls the delay                              |
+* k:thread3 found no mutex,blocked. -------------------------------------------|

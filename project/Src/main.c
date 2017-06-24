@@ -55,7 +55,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "open103z.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -110,15 +110,31 @@ int main(void)
 
   /* Initialize interrupts */
   MX_NVIC_Init();
-
+  
   /* USER CODE BEGIN 2 */
+  BSP_LED_On(LED1);
+  HAL_Delay(200);
+  BSP_LED_On(LED2);
+  HAL_Delay(200);
+  BSP_LED_On(LED3);
+  HAL_Delay(200);
+  BSP_LED_On(LED4);
+  HAL_Delay(200);
+  BSP_LED_Off(LED1);
+  HAL_Delay(200);
+  BSP_LED_Off(LED2);
+  HAL_Delay(200);
+  BSP_LED_Off(LED3);
+  HAL_Delay(200);
+  BSP_LED_Off(LED4);
+  HAL_Delay(200);
 //  setvbuf(stdin, NULL, _IONBF, 0);
 //  char c =getchar();
  // printf("I get:%c",c );
  // printf("Hello world!\n");
   /* Init only, trace starts later...*/
  // vTraceEnable(TRC_INIT);
-  vTraceEnable(TRC_START_AWAIT_HOST);
+ // vTraceEnable(TRC_START_AWAIT_HOST);
 
   /* In a task or ISR */
  // vTraceEnable(TRC_START);
