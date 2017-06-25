@@ -66,6 +66,7 @@ osThreadId led3TaskHandle;
 osThreadId led4TaskHandle;
 osThreadId printfTaskHandle;
 osThreadId sensor1TaskHandle;
+osMessageQId queue01Handle;
 osMutexId mutex01Handle;
 osSemaphoreId keySemHandle;
 
@@ -74,7 +75,7 @@ osSemaphoreId keySemHandle;
 
 // used to detect and latch errors */
 __IO uint32_t HighPriorityThreadCycles = 0, MediumPriorityThreadCycles = 0, LowPriorityThreadCycles = 0;
-
+uint32_t ProducerValue = 0, ConsumerValue = 0;
 char  cPrint[1024];
 volatile uint16_t uiADC[10];
 char  cGetChar[1024];
@@ -177,8 +178,8 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the semaphores(s) */
   /* definition and creation of keySem */
-//  osSemaphoreDef(keySem);
-//  keySemHandle = osSemaphoreCreate(osSemaphore(keySem), 1);
+  osSemaphoreDef(keySem);
+  keySemHandle = osSemaphoreCreate(osSemaphore(keySem), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -191,18 +192,18 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of led1Task */
-  osThreadDef(led1Task, vLed1Task, osPriorityNormal, 0, 128);
+  osThreadDef(led1Task, vLed1Task, osPriorityBelowNormal, 0, 128);
   led1TaskHandle = osThreadCreate(osThread(led1Task), NULL);
 
   /* definition and creation of led2Task */
-  osThreadDef(led2Task, vLed2Task, osPriorityBelowNormal, 0, 128);
+  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
   led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
 
-  /* definition and creation of led3Task */
-  osThreadDef(led3Task, vLed3Task, osPriorityLow, 0, 128);
-  led3TaskHandle = osThreadCreate(osThread(led3Task), NULL);
+//  /* definition and creation of led3Task */
+//  osThreadDef(led3Task, vLed3Task, osPriorityNormal, 0, 128);
+//  led3TaskHandle = osThreadCreate(osThread(led3Task), NULL);
 
-  /* definition and creation of led4Task */
+//  /* definition and creation of led4Task */
 //  osThreadDef(led4Task, vLed4Task, osPriorityNormal, 0, 128);
 //  led4TaskHandle = osThreadCreate(osThread(led4Task), NULL);
 
@@ -218,6 +219,11 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
+  /* Create the queue(s) */
+  /* definition and creation of queue01 */
+  osMessageQDef(queue01, 1, uint16_t);
+  queue01Handle = osMessageCreate(osMessageQ(queue01), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -228,45 +234,25 @@ void vLed1Task(void const * argument)
 {
 
   /* USER CODE BEGIN vLed1Task */
+  //this task is producer
   /* Infinite loop */
-   for (;;)
+    for (;;)
   {
-    /* The first time through the mutex will be immediately available, on
-    subsequent times through the mutex will be held by the low priority thread
-    at this point and this Take will cause the low priority thread to inherit
-    the priority of this tadhr.  In this case the block time must be
-    long enough to ensure the low priority thread will execute again before the
-    block time expires.  If the block time does expire then the error
-    flag will be set here */
-    if (osMutexWait(mutex01Handle, mutexTWO_TICK_DELAY) != osOK)
+    if (osMessagePut(queue01Handle, ProducerValue, 100) != osOK)
     {
-      /* Toggle LED3 to indicate error */
+      /* Toggle LED3 to indicate error  */
       BSP_LED_Toggle(LED3);
     }
-
-    /* Ensure the other thread attempting to access the mutex
-    are able to execute to ensure they either block (where a block
-    time is specified) or return an error (where no block time is
-    specified) as the mutex is held by this task */
-    osDelay(mutexSHORT_DELAY);
-
-    /* We should now be able to release the mutex .
-    When the mutex is available again the medium priority thread
-    should be unblocked but not run because it has a lower priority
-    than this thread.  The low priority thread should also not run
-    at this point as it too has a lower priority than this thread */
-    if (osMutexRelease(mutex01Handle) != osOK)
+    else
     {
-      /* Toggle LED3 to indicate error */
-      BSP_LED_Toggle(LED3);
+      /* Increment the variable we are going to post next time round.  The
+      consumer will expect the numbers to follow in numerical order */
+      ++ProducerValue;
+
+      /* Toggle LED1 to indicate a correct number received  */
+      BSP_LED_Toggle(LED1);
+      osDelay(1000);
     }
-
-    /* Keep count of the number of cycles this thread has performed */
-    HighPriorityThreadCycles++;
-    BSP_LED_Toggle(LED1);
-
-    /* Suspend ourselves to the medium priority thread can execute */
-    osThreadSuspend(NULL);
   }
   /* USER CODE END vLed1Task */
 }
@@ -275,55 +261,31 @@ void vLed1Task(void const * argument)
 void vLed2Task(void const * argument)
 {
   /* USER CODE BEGIN vLed2Task */
-  (void) argument;
+  //this task is consumer
+  osEvent event;
   /* Infinite loop */
-    for (;;)
+   for (;;)
   {
-    /* This thread will run while the high-priority thread is blocked, and the
-    high-priority thread will block only once it has the mutex - therefore
-    this call should block until the high-priority thread has given up the
-    mutex, and not actually execute past this call until the high-priority
-    thread is suspended */
-    if (osMutexWait(mutex01Handle, osWaitForever) == osOK)
+    /* Get the message from the queue */
+    event = osMessageGet(queue01Handle, 100);
+
+    if (event.status == osEventMessage)
     {
-      if (osThreadGetState(led1TaskHandle) != osThreadSuspended)
+      if (event.value.v != ConsumerValue)
       {
-        /* Did not expect to execute until the high priority thread was
-        suspended.
-        Toggle LED3 to indicate error */
+        /* Catch-up */
+        ConsumerValue = event.value.v;
+
+        /* Toggle LED3 to indicate error */
         BSP_LED_Toggle(LED3);
       }
       else
       {
-        /* Give the mutex back before suspending ourselves to allow
-        the low priority thread to obtain the mutex */
-        if (osMutexRelease(mutex01Handle) != osOK)
-        {
-          /* Toggle LED3 to indicate error */
-          BSP_LED_Toggle(LED3);
-        }
-        osThreadSuspend(NULL);
+        /* Increment the value we expect to remove from the queue next time
+        round */
+        ++ConsumerValue;
       }
     }
-    else
-    {
-      /* We should not leave the osMutexWait() function
-      until the mutex was obtained.
-      Toggle LED3 to indicate error */
-      BSP_LED_Toggle(LED3);
-    }
-
-    /* The High and Medium priority threads should be in lock step */
-    if (HighPriorityThreadCycles != (MediumPriorityThreadCycles + 1))
-    {
-      /* Toggle LED3 to indicate error */
-      BSP_LED_Toggle(LED3);
-    }
-
-    /* Keep count of the number of cycles this task has performed so a
-    stall can be detected */
-    MediumPriorityThreadCycles++;
-    BSP_LED_Toggle(LED2);
   }
   /* USER CODE END vLed2Task */
 }
@@ -389,7 +351,6 @@ void vLed3Task(void const * argument)
   }
   /* USER CODE END vLed3Task */
 }
-
 
 /* vLed4Task function */
 void vLed4Task(void const * argument)

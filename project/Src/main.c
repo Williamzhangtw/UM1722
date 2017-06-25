@@ -110,7 +110,7 @@ int main(void)
 
   /* Initialize interrupts */
   MX_NVIC_Init();
-  
+
   /* USER CODE BEGIN 2 */
   BSP_LED_On(LED1);
   HAL_Delay(200);
@@ -132,12 +132,14 @@ int main(void)
 //  char c =getchar();
  // printf("I get:%c",c );
  // printf("Hello world!\n");
+ 
   /* Init only, trace starts later...*/
  // vTraceEnable(TRC_INIT);
- // vTraceEnable(TRC_START_AWAIT_HOST);
-
-  /* In a task or ISR */
- // vTraceEnable(TRC_START);
+ //snapshot trace starts /
+  //vTraceEnable(TRC_START);
+  /* stream trace */
+  vTraceEnable(TRC_INIT);
+  //vTraceEnable(TRC_START_AWAIT_HOST);
 
 //void vTraceStop(void)
 

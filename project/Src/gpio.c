@@ -59,6 +59,7 @@
 /*----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
 extern osSemaphoreId keySemHandle;
+extern uint32_t  RecorderEnabled;
 /* USER CODE END 1 */
 
 /** Configure pins as 
@@ -121,8 +122,11 @@ void MX_GPIO_Init(void)
 /* USER CODE BEGIN 2 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  osSemaphoreRelease(keySemHandle);
+  //osSemaphoreRelease(keySemHandle);
   //BSP_LED_Toggle(LED1);
+  //vTraceEnable(TRC_START);
+//  HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+//  RecorderEnabled = 1;
 }
 /* USER CODE END 2 */
 

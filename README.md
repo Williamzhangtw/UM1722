@@ -29,7 +29,7 @@ Thread 1: this thread toggles the LED1 each 200 ms for 5 seconds and then it sus
 * cubemx 
 FreeRTOS configuration->Include parameters->Enable eTaskGetState
 ### timeline
-0s-----------a-b-c-d-e-f-g-h-i-j-k-----------10s
+0s-----------a-b-c-d-e-f-g-h-i-j-k-
 * 0s:thread1(H) take the mutex,and it calls the delay
 * a:thread2(M)found no mutex,blocked
 * b:thread3(L)found no mutex,blocked
@@ -42,3 +42,11 @@ FreeRTOS configuration->Include parameters->Enable eTaskGetState
 * i:thread3 release mutex
 * j:thread1 take the mutex,and it calls the delay
 * k:thread3 found no mutex,blocked.->
+## queue
+### timeline
+0s-a-b--------------1s
+* 0s:Thread1 put a message then delay
+* a:Thread2 get the message 
+* b:Thread2 try to get the message again,but no message,then blocked
+* 1s:Thread1 put a message then delay.end of cycle
+
