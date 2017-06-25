@@ -111,6 +111,12 @@
 #define configUSE_CO_ROUTINES                    0
 #define configMAX_CO_ROUTINE_PRIORITIES          ( 2 )
 
+/* Software timer definitions. */
+#define configUSE_TIMERS                         1
+#define configTIMER_TASK_PRIORITY                ( 2 )
+#define configTIMER_QUEUE_LENGTH                 10
+#define configTIMER_TASK_STACK_DEPTH             128
+
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
 #define INCLUDE_vTaskPrioritySet            1
@@ -153,6 +159,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 header file. */
 /* USER CODE BEGIN 1 */   
 #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );} 
+#define configUSE_TICKLESS_IDLE   0
 /* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
@@ -164,7 +171,16 @@ standard names. */
               to prevent overwriting SysTick_Handler defined within STM32Cube HAL */
 /* #define xPortSysTickHandler SysTick_Handler */
 
-/* USER CODE BEGIN Defines */   	      
+/* USER CODE BEGIN Defines */   	  
+
+/* The configPRE_SLEEP_PROCESSING() and configPOST_SLEEP_PROCESSING() macros
+allow the application writer to add additional code before and after the MCU is
+placed into the low power state respectively.  The empty implementations
+provided in this demo can be extended to save even more power. */
+#if configUSE_TICKLESS_IDLE == 1 
+#define configPRE_SLEEP_PROCESSING                        PreSleepProcessing
+#define configPOST_SLEEP_PROCESSING                       PostSleepProcessing
+#endif /* configUSE_TICKLESS_IDLE == 1 */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
 #if (configUSE_TRACE_FACILITY == 1)
 

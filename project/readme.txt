@@ -50,27 +50,8 @@
 
 @par Description
 
-The aim of this example is to explain how to use semaphores through CMSIS-RTOS based
-on FreeRTOS APIs.
-This example implements two threads with different priorities that share a semaphore to
-toggle LEDs, following more details about the execution of the example.
-
-1. The thread 1 which has the higher priority obtains the semaphore and toggle the LED1
-for 5 seconds
-2. The thread 1 releases the semaphore and suspends itself.
-3. The low priority thread can execute now, it obtains the semaphore and resume
-execution of the thread 2.
-4. As it has the higher priority the thread 1 will try to obtain the semaphore, but it blocks
-because the semaphore is already taken by the low priority thread,
-5. Thread 2 will toggle the LED2 for 5 seconds, before releasing the semaphore and
-begin a new cycle.
-
-0s***************5s****************10s
-thread1:higher priority
-thread2:
-0s:The thread 1 obtains the semaphore and toggle the LED1
-5s:The thread 1 releases the semaphore and suspends itself.Thread 2 obtains the semaphore and resume thread 2.
-10s:Thread 2 release the semaphore
+This application creates a thread that toggle LED2 every 400 ms, and a periodic 
+timer that calls a callback function every 200 ms to toggle the LED1.  
 
 @note Care must be taken when using HAL_Delay(), this function provides accurate
       delay (in milliseconds) based on variable incremented in SysTick ISR. This

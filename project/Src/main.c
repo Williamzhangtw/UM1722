@@ -138,7 +138,7 @@ int main(void)
  //snapshot trace starts /
   //vTraceEnable(TRC_START);
   /* stream trace */
-  vTraceEnable(TRC_INIT);
+  //vTraceEnable(TRC_INIT);
   //vTraceEnable(TRC_START_AWAIT_HOST);
 
 //void vTraceStop(void)

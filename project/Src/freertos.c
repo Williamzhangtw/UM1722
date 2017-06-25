@@ -67,6 +67,7 @@ osThreadId led4TaskHandle;
 osThreadId printfTaskHandle;
 osThreadId sensor1TaskHandle;
 osMessageQId queue01Handle;
+osTimerId timer01Handle;
 osMutexId mutex01Handle;
 osSemaphoreId keySemHandle;
 
@@ -89,6 +90,7 @@ void vLed3Task(void const * argument);
 void vLed4Task(void const * argument);
 void vPrintfTask(void const * argument);
 void vSensor1Task(void const * argument);
+void Callback01(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -186,18 +188,24 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of timer01 */
+  osTimerDef(timer01, Callback01);
+  timer01Handle = osTimerCreate(osTimer(timer01), osTimerPeriodic, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+   osTimerStart(timer01Handle, 200);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the thread(s) */
   /* definition and creation of led1Task */
-  osThreadDef(led1Task, vLed1Task, osPriorityBelowNormal, 0, 128);
+  osThreadDef(led1Task, vLed1Task, osPriorityNormal, 0, 128);
   led1TaskHandle = osThreadCreate(osThread(led1Task), NULL);
 
   /* definition and creation of led2Task */
-  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
-  led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
+//  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
+//  led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
 
 //  /* definition and creation of led3Task */
 //  osThreadDef(led3Task, vLed3Task, osPriorityNormal, 0, 128);
@@ -216,7 +224,7 @@ void MX_FREERTOS_Init(void) {
 //  sensor1TaskHandle = osThreadCreate(osThread(sensor1Task), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+//  /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* Create the queue(s) */
@@ -236,23 +244,11 @@ void vLed1Task(void const * argument)
   /* USER CODE BEGIN vLed1Task */
   //this task is producer
   /* Infinite loop */
-    for (;;)
+  for (;;)
   {
-    if (osMessagePut(queue01Handle, ProducerValue, 100) != osOK)
-    {
-      /* Toggle LED3 to indicate error  */
-      BSP_LED_Toggle(LED3);
-    }
-    else
-    {
-      /* Increment the variable we are going to post next time round.  The
-      consumer will expect the numbers to follow in numerical order */
-      ++ProducerValue;
+    BSP_LED_Toggle(LED2);
 
-      /* Toggle LED1 to indicate a correct number received  */
-      BSP_LED_Toggle(LED1);
-      osDelay(1000);
-    }
+    osDelay(400);
   }
   /* USER CODE END vLed1Task */
 }
@@ -416,14 +412,58 @@ if (HAL_ADC_Start_DMA(&hadc1,
     vTempCtrl(uiADC[0]);
 //    uiADC = HAL_ADC_GetValue(&hadc1);
     osDelay(1);
+  }
   /* USER CODE END vSensor1Task */
 }
 
-/* USER CODE BEGIN Application */
- 
-
+/* Callback01 function */
+void Callback01(void const * argument)
+{
+  /* USER CODE BEGIN Callback01 */
+   BSP_LED_Toggle(LED1);
+  /* USER CODE END Callback01 */
 }
 
+/* USER CODE BEGIN Application */
+/**
+  * @brief  Pre Sleep Processing
+  * @param  ulExpectedIdleTime: Expected time in idle state
+  * @retval None
+  */
+void PreSleepProcessing(uint32_t * ulExpectedIdleTime)
+{
+  /* Called by the kernel before it places the MCU into a sleep mode because
+  configPRE_SLEEP_PROCESSING() is #defined to PreSleepProcessing().
+
+  NOTE:  Additional actions can be taken here to get the power consumption
+  even lower.  For example, peripherals can be turned off here, and then back
+  on again in the post sleep processing function.  For maximum power saving
+  ensure all unused pins are in their lowest power state. */
+
+  /* 
+    (*ulExpectedIdleTime) is set to 0 to indicate that PreSleepProcessing contains
+    its own wait for interrupt or wait for event instruction and so the kernel vPortSuppressTicksAndSleep 
+    function does not need to execute the wfi instruction  
+  */
+  *ulExpectedIdleTime = 0;
+  
+  /*Enter to sleep Mode using the HAL function HAL_PWR_EnterSLEEPMode with WFI instruction*/
+  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);  
+}
+
+/**
+  * @brief  Post Sleep Processing
+  * @param  ulExpectedIdleTime: Not used
+  * @retval None
+  */
+void PostSleepProcessing(uint32_t * ulExpectedIdleTime)
+{
+  /* Called by the kernel when the MCU exits a sleep mode because
+  configPOST_SLEEP_PROCESSING is #defined to PostSleepProcessing(). */
+
+  /* Avoid compiler warnings about the unused parameter. */
+  (void) ulExpectedIdleTime;
+}
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -26,8 +26,8 @@ Thread 1: this thread toggles the LED1 each 200 ms for 5 seconds and then it sus
 * y:Thread1 unblocked,and get the semaphore
 * z:No semaphore again!Thread1 blocked
 ## mutex
-* cubemx 
-FreeRTOS configuration->Include parameters->Enable eTaskGetState
+1. cubemx 
+* FreeRTOS configuration->Include parameters->Enable eTaskGetState
 ### timeline
 0s-----------a-b-c-d-e-f-g-h-i-j-k-
 * 0s:thread1(H) take the mutex,and it calls the delay
@@ -49,4 +49,11 @@ FreeRTOS configuration->Include parameters->Enable eTaskGetState
 * a:Thread2 get the message 
 * b:Thread2 try to get the message again,but no message,then blocked
 * 1s:Thread1 put a message then delay.end of cycle
-
+## timer
+1. cubemx
+* FreeRTOS configuration->Config parameters->Enable USE_TIMER
+* create a timer
+### timeline
+startup---x-------
+* startup:initiate the timer then strart the timer
+* x:timer is using osWaitUntil() blink every 200ms
