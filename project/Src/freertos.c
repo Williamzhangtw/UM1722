@@ -80,7 +80,23 @@ uint32_t ProducerValue = 0, ConsumerValue = 0;
 char  cPrint[1024];
 volatile uint16_t uiADC[10];
 char  cGetChar[1024];
+osMessageQId osQueue;
+#define QUEUE_SIZE        (uint32_t) 1
+/* The number of items the queue can hold.  This is 1 as the Rx task will
+remove items as they are added so the Tx task should always find the queue
+empty. */
+#define QUEUE_LENGTH             (1)
 
+/* The rate at which the Tx task sends to the queue. */
+#define TX_DELAY                 (500)
+
+/* The value that is sent from the Tx task to the Rx task on the queue. */
+#define QUEUED_VALUE             (100)
+
+/* The length of time the LED will remain on for.  It is on just long enough
+to be able to see with the human eye so as not to distort the power readings too
+much. */
+#define LED_TOGGLE_DELAY         (20)
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
@@ -195,7 +211,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
-   osTimerStart(timer01Handle, 200);
+//   osTimerStart(timer01Handle, 200);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the thread(s) */
@@ -204,10 +220,10 @@ void MX_FREERTOS_Init(void) {
   led1TaskHandle = osThreadCreate(osThread(led1Task), NULL);
 
   /* definition and creation of led2Task */
-//  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
-//  led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
+  osThreadDef(led2Task, vLed2Task, osPriorityNormal, 0, 128);
+  led2TaskHandle = osThreadCreate(osThread(led2Task), NULL);
 
-//  /* definition and creation of led3Task */
+  /* definition and creation of led3Task */
 //  osThreadDef(led3Task, vLed3Task, osPriorityNormal, 0, 128);
 //  led3TaskHandle = osThreadCreate(osThread(led3Task), NULL);
 
@@ -246,9 +262,15 @@ void vLed1Task(void const * argument)
   /* Infinite loop */
   for (;;)
   {
-    BSP_LED_Toggle(LED2);
+    /* Place this thread into the blocked state until it is time to run again.
+       The kernel will place the MCU into the Retention low power sleep state
+       when the idle thread next runs. */
+    osDelay(TX_DELAY);
 
-    osDelay(400);
+    /* Send to the queue - causing the queue receive thread to flash its LED.
+       It should not be necessary to block on the queue send because the Rx
+       thread will already have removed the last queued item. */
+    osMessagePut(queue01Handle, (uint32_t)QUEUED_VALUE, 0);
   }
   /* USER CODE END vLed1Task */
 }
@@ -260,26 +282,26 @@ void vLed2Task(void const * argument)
   //this task is consumer
   osEvent event;
   /* Infinite loop */
-   for (;;)
+  for (;;)
   {
-    /* Get the message from the queue */
-    event = osMessageGet(queue01Handle, 100);
+    /* Wait until something arrives in the queue. */
+    event = osMessageGet(queue01Handle, osWaitForever);
 
+    /*  To get here something must have arrived, but is it the expected
+    value?  If it is, turn the LED on for a short while. */
     if (event.status == osEventMessage)
     {
-      if (event.value.v != ConsumerValue)
+      if (event.value.v == QUEUED_VALUE)
       {
-        /* Catch-up */
-        ConsumerValue = event.value.v;
-
-        /* Toggle LED3 to indicate error */
-        BSP_LED_Toggle(LED3);
-      }
-      else
-      {
-        /* Increment the value we expect to remove from the queue next time
-        round */
-        ++ConsumerValue;
+        BSP_LED_On(LED1);
+        BSP_LED_On(LED2);
+        BSP_LED_On(LED3);
+        BSP_LED_On(LED4);
+        osDelay(LED_TOGGLE_DELAY);
+        BSP_LED_Off(LED1);
+        BSP_LED_Off(LED2);
+        BSP_LED_Off(LED3);
+        BSP_LED_Off(LED4);
       }
     }
   }

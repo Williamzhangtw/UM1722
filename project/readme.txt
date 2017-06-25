@@ -50,9 +50,18 @@
 
 @par Description
 
-This application creates a thread that toggle LED2 every 400 ms, and a periodic 
-timer that calls a callback function every 200 ms to toggle the LED1.  
+This application shows how to enter and exit low power mode with CMSIS RTOS API.
 
+This application creates two threads.
+
+   + A Rx thread that blocks on a queue to wait for data, blinking the LED1 each 
+     time data is received (turning it on and then off again) before returning 
+     to block on the queue once more.
+
+   + A Tx thread that repeatedly enters the Blocked state for 500ms.  
+     On exiting the blocked state the Tx thread sends a value through the queue 
+     to the Rx thread (causing the Rx thread to exit the blocked state and blink 
+     the LED1).
 @note Care must be taken when using HAL_Delay(), this function provides accurate
       delay (in milliseconds) based on variable incremented in SysTick ISR. This
       implies that if HAL_Delay() is called from a peripheral ISR process, then 

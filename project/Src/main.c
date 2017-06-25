@@ -139,7 +139,7 @@ int main(void)
   //vTraceEnable(TRC_START);
   /* stream trace */
   //vTraceEnable(TRC_INIT);
-  //vTraceEnable(TRC_START_AWAIT_HOST);
+ // vTraceEnable(TRC_START_AWAIT_HOST);
 
 //void vTraceStop(void)
 

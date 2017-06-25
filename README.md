@@ -57,3 +57,14 @@ Thread 1: this thread toggles the LED1 each 200 ms for 5 seconds and then it sus
 startup---x-------
 * startup:initiate the timer then strart the timer
 * x:timer is using osWaitUntil() blink every 200ms
+## LowPower
+1. cubemx
+* set all free pins as analog(to optimize the power consumption)
+2. add some code to configFreeRTOS.h
+```
+#if configUSE_TICKLESS_IDLE == 1 
+#define configPRE_SLEEP_PROCESSING                        PreSleepProcessing
+#define configPOST_SLEEP_PROCESSING                       PostSleepProcessing
+#endif /* configUSE_TICKLESS_IDLE == 1 */
+```
+every tick,mcu will wakeup,if no intend task need to do,it will sleep again.otherwise,It won't sleep till next tick!
